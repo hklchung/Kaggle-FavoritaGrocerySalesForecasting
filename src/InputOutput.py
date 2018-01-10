@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Dec 16 10:47:10 2017
-
-@author: Hubert
-"""
-
 import pandas as pd
 import datetime as dt
 
