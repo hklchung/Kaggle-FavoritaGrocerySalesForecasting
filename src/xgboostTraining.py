@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Dec 16 23:24:34 2017
-
-@author: Hubert
-"""
-
 import xgboost as xgb
 
 def trainXGModel(train, verify):
