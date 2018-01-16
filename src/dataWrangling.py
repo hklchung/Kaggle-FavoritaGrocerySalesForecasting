@@ -54,52 +54,13 @@ def rollingMean(values, window):
     return sma
     
 def newMovingAverages(df, n): #n is the number of days
-    #first write new columns for the unit sale lag
     le = preprocessing.LabelEncoder()
     le.fit(df['date'])
-    df['date'] = le.transform(df['date'])
+    df['dateIndex'] = le.transform(df['date'])
     le.fit(df['item_nbr'])
     df['item_nbr'] = le.transform(df['item_nbr'])
     
-    df = df.sort_values(['store_nbr', 'item_nbr', 'date'], ascending=[True, True, True])
-    df.reset_index(inplace=True)
-    
-    #this variable is used to determine how many indexes we need to move forwards in after a 0 has been detected
-    counter = 0
-    
-    
-    #Add lagging columns first
-    for i in tqdm(range(0, len(df))):
-        for ii in range(1, n+1):
-            if (i - ii + counter) < 0: #check if we can't search the entry first
-                df.set_value(i, 'unit_sales_lag' + str(ii), np.nan)
-            elif df['item_nbr'][i] != df['item_nbr'][i - ii + counter] or df['store_nbr'][i] != df['store_nbr'][i - ii + counter]:
-                df.set_value(i, 'unit_sales_lag' + str(ii), np.nan) 
-            elif df['item_nbr'][i] == df['item_nbr'][i - ii + counter] and df['date'][i] == df['date'][i - ii + counter] + ii:
-                df.set_value(i, 'unit_sales_lag' + str(ii), df['unit_sales'][i - ii + counter])
-            elif df['item_nbr'][i] == df['item_nbr'][i - ii + counter] and df['date'][i] != df['date'][i - ii + counter] + ii:
-                df.set_value(i, 'unit_sales_lag' + str(ii), 0)
-                counter += 1
-            # when iteration gets to a new item_nbr (new item or beginning new store) and we have no first day sales data
-            # elif df['item_nbr'][i] != df['item_nbr'][i - 1] and df['date'][i] > 0:
-            else:
-                pass 
-        counter = 0 #reinitialize the counter
-    
-    #Then do moving averages        
-    movingAverageAlgo(df, n)
-    return df
-
-
-def newShortMovingAverages(df, n, itemsDF): #n is the number of days
-    #first write new columns for the unit sale lag
-    le = preprocessing.LabelEncoder()
-    le.fit(df['date'])
-    df['date'] = le.transform(df['date'])
-    le.fit(df['item_nbr'])
-    df['item_nbr'] = le.transform(df['item_nbr'])
-    
-    df = df.sort_values(['store_nbr', 'item_nbr', 'date'], ascending=[True, True, True])
+    df = df.sort_values(['store_nbr', 'item_nbr', 'dateIndex'], ascending=[True, True, True])
     df.reset_index(inplace=True)
     
     #this variable is used to determine how many indexes we need to move forwards in after a 0 has been detected
@@ -113,9 +74,44 @@ def newShortMovingAverages(df, n, itemsDF): #n is the number of days
                 df.set_value(i, 'unit_sales_lag' + str(ii), np.nan)
             elif df['item_nbr'][i] != df['item_nbr'][i - ii] or df['store_nbr'][i] != df['store_nbr'][i - ii]:
                 df.set_value(i, 'unit_sales_lag' + str(ii), np.nan) 
-            elif df['item_nbr'][i] == df['item_nbr'][i - ii + counter] and df['date'][i] == df['date'][i - ii + counter] + ii:
+            elif df['item_nbr'][i] == df['item_nbr'][i - ii + counter] and df['dateIndex'][i] == df['dateIndex'][i - ii + counter] + ii:
                 df.set_value(i, 'unit_sales_lag' + str(ii), df['unit_sales'][i - ii + counter])
-            elif df['item_nbr'][i] == df['item_nbr'][i - ii + counter] and df['date'][i] != df['date'][i - ii + counter] + ii:
+            elif df['item_nbr'][i] == df['item_nbr'][i - ii + counter] and df['dateIndex'][i] != df['dateIndex'][i - ii + counter] + ii:
+                df.set_value(i, 'unit_sales_lag' + str(ii), 0)
+                counter += 1
+            # when iteration gets to a new item_nbr (new item or beginning new store) and we have no first day sales data
+            # elif df['item_nbr'][i] != df['item_nbr'][i - 1] and df['date'][i] > 0:
+            else:
+                pass 
+        counter = 0 #reinitialize the counter
+    
+    #Then do moving averages        
+    movingAverageAlgo(df, n)
+    return df
+
+
+
+def newDateMovingAverages(df, n, date): #n is the number of days
+    #first write new columns for the unit sale lag
+    df = df.sort_values(['store_nbr', 'item_nbr', 'dateIndex'], ascending=[True, True, True])
+    df.reset_index(inplace=True)
+    
+    #this variable is used to determine how many indexes we need to move forwards in after a 0 has been detected
+    counter = 0
+    
+    
+    #Add lagging columns first
+    for i in tqdm(range(0, len(df))):
+        for ii in range(1, n+1):
+            if (i - ii) < 0: #check if we can't search the entry first
+                df.set_value(i, 'unit_sales_lag' + str(ii), np.nan)
+            elif (df['date'] != date):
+                pass
+            elif df['item_nbr'][i] != df['item_nbr'][i - ii] or df['store_nbr'][i] != df['store_nbr'][i - ii]:
+                df.set_value(i, 'unit_sales_lag' + str(ii), np.nan) 
+            elif df['item_nbr'][i] == df['item_nbr'][i - ii + counter] and df['dateIndex'][i] == df['dateIndex'][i - ii + counter] + ii:
+                df.set_value(i, 'unit_sales_lag' + str(ii), df['unit_sales'][i - ii + counter])
+            elif df['item_nbr'][i] == df['item_nbr'][i - ii + counter] and df['dateIndex'][i] != df['dateIndex'][i - ii + counter] + ii:
                 df.set_value(i, 'unit_sales_lag' + str(ii), 0)
                 counter += 1
             # when iteration gets to a new item_nbr (new item or beginning new store) and we have no first day sales data
